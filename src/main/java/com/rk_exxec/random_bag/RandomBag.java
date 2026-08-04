@@ -71,7 +71,7 @@ public class RandomBag
         }
 
         for (int i = 0; i< CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().size(); i++) {
-            Pattern pat = Pattern.compile("\\[" + CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().get(i).replace("*", ".*") + "\\]");
+            Pattern pat = Pattern.compile(CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().get(i).replace("*", ".*"));
             matchPatternCycle.put(pat, CommonConfig.BAG_SIZE_MULTS.get().get(i));
             RandomBag.LOGGER.info("Parsing match pattern: "+ CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().get(i));
         }
