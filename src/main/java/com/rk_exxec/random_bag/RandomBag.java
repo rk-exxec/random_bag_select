@@ -26,8 +26,6 @@ public class RandomBag
 
     public static Hashtable<Pattern, Integer> matchPatternCycle = new Hashtable<Pattern,Integer>();
 
-    public static Hashtable<String, Integer> matchPatternCache = new Hashtable<String,Integer>();
-
     public RandomBag(FMLJavaModLoadingContext context)
     {
         LOGGER.info("Hello from " + MODID);
@@ -45,37 +43,45 @@ public class RandomBag
 
     // @SubscribeEvent
     public void commonSetup(FMLCommonSetupEvent e){
-        LOGGER.info("Loading config");
-        matchPatternCycle.clear();
-        matchPatternCache.clear();
+        try
+        {
+            LOGGER.info("Loading config");
+            matchPatternCycle.clear();
 
-        if(CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().size() < 1){
-            LOGGER.error("Not enough elements in allowed resource locations list, reverting to default.");
-            CommonConfig.ALLOWED_RESOURCE_LOCATIONS.set(CommonConfig.ALLOWED_RESOURCE_LOCATIONS.getDefault());
-        }
-
-        int size_diff = CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().size() - CommonConfig.BAG_SIZE_MULTS.get().size() ;
-        if(CommonConfig.BAG_SIZE_MULTS.get().size() < CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().size() ){
-            LOGGER.error("Must contain same amount of parameters as 'Allowed resource locations', setting missing multis to 1");
-            List<Integer> existIntegers = (List<Integer>) CommonConfig.BAG_SIZE_MULTS.get();
-            for(int i=0; i<size_diff; i++){
-                existIntegers.add(CommonConfig.defaultMult);
+            if(CommonConfig.ALLOWED_STRUCTURE_POOLS.get().size() < 1){
+                LOGGER.error("Not enough elements in allowed structure pools list, reverting to default.");
+                CommonConfig.ALLOWED_STRUCTURE_POOLS.set(CommonConfig.ALLOWED_STRUCTURE_POOLS.getDefault());
             }
-            CommonConfig.BAG_SIZE_MULTS.set(existIntegers);
+
+            int size_diff = CommonConfig.ALLOWED_STRUCTURE_POOLS.get().size() - CommonConfig.BAG_SIZE_MULTS.get().size() ;
+            if(CommonConfig.BAG_SIZE_MULTS.get().size() < CommonConfig.ALLOWED_STRUCTURE_POOLS.get().size() ){
+                LOGGER.error("Must contain same amount of parameters as 'Allowed structure pools', setting missing multis to 1");
+                List<Integer> existIntegers = (List<Integer>) CommonConfig.BAG_SIZE_MULTS.get();
+                for(int i=0; i<size_diff; i++){
+                    existIntegers.add(CommonConfig.defaultMult);
+                }
+                CommonConfig.BAG_SIZE_MULTS.set(existIntegers);
+            }
+
+            if(CommonConfig.BAG_SIZE_MULTS.get().size() > CommonConfig.ALLOWED_STRUCTURE_POOLS.get().size() ){
+                LOGGER.error("Must contain same amount of parameters as 'Allowed structure pools', truncating additional values");
+
+                CommonConfig.BAG_SIZE_MULTS.set(CommonConfig.BAG_SIZE_MULTS.get().subList(0,-size_diff));
+            }
+
+            for (int i = 0; i< CommonConfig.ALLOWED_STRUCTURE_POOLS.get().size(); i++) {
+                Pattern pat = Pattern.compile(CommonConfig.ALLOWED_STRUCTURE_POOLS.get().get(i).replace("*", ".*"));
+                matchPatternCycle.put(pat, CommonConfig.BAG_SIZE_MULTS.get().get(i));
+                RandomBag.LOGGER.info("Parsing match pattern: "+ CommonConfig.ALLOWED_STRUCTURE_POOLS.get().get(i));
+            }
         }
-
-        if(CommonConfig.BAG_SIZE_MULTS.get().size() > CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().size() ){
-            LOGGER.error("Must contain same amount of parameters as 'Allowed resource locations', truncating additional values");
-
-            CommonConfig.BAG_SIZE_MULTS.set(CommonConfig.BAG_SIZE_MULTS.get().subList(0,-size_diff));
+        catch(Exception exception)
+        {
+            RandomBag.LOGGER.error("Error initializing random_bag. Invalid config.", exception);
+            matchPatternCycle.clear();
+            CommonConfig.ALLOWED_STRUCTURE_POOLS.set(CommonConfig.ALLOWED_STRUCTURE_POOLS.getDefault());
+            CommonConfig.BAG_SIZE_MULTS.set(CommonConfig.BAG_SIZE_MULTS.getDefault());
         }
-
-        for (int i = 0; i< CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().size(); i++) {
-            Pattern pat = Pattern.compile(CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().get(i).replace("*", ".*"));
-            matchPatternCycle.put(pat, CommonConfig.BAG_SIZE_MULTS.get().get(i));
-            RandomBag.LOGGER.info("Parsing match pattern: "+ CommonConfig.ALLOWED_RESOURCE_LOCATIONS.get().get(i));
-        }
-
 
     }
 }
