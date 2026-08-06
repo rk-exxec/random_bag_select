@@ -1,12 +1,11 @@
 package com.rk_exxec.random_bag.mixins;
+
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -17,16 +16,13 @@ import com.rk_exxec.random_bag.RandomBag;
 import com.rk_exxec.random_bag.NotedBag;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
 import java.util.regex.Pattern;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -67,7 +63,6 @@ public class JigsawPlacementMixin {
         }
 
         String resourceLoc = poolId.toString();
-        RandomBag.LOGGER.debug("Checking structure " + resourceLoc + " for random bag");
         matchIfNotCached(resourceLoc);
         var bagHolder = randomBags.get(resourceLoc);
 
@@ -75,12 +70,13 @@ public class JigsawPlacementMixin {
         if (bagHolder == null) return instance.getRandomTemplate(random);
 
         // else: random bag
-        RandomBag.LOGGER.info("Pulling one (1) variant out of the bag for: " + resourceLoc);
+        RandomBag.LOGGER.info("Bagging a structure");
+        RandomBag.LOGGER.debug("Pulling one (1) variant out of the bag for pool: <" + resourceLoc + ">");
         ObjectArrayList<StructurePoolElement> bag = bagHolder.bag();
         Integer multiplier = CommonConfig.BAG_SIZE_MULTS.get().get(bagHolder.matchIdx());
-        
+
         if (bag == null || bag.isEmpty()) {
-            RandomBag.LOGGER.info("Bag empty, reshuffling...");
+            RandomBag.LOGGER.debug("Bag empty, reshuffling...");
             bagHolder.bag().clear();
             // depending on the config BAG_SIZE_MULTS add multiple times to allow for more permutations
             for(int i=0; i<multiplier ; i++){
@@ -90,7 +86,7 @@ public class JigsawPlacementMixin {
             if(multiplier > 1) Collections.shuffle(bagHolder.bag()); 
         }
         StructurePoolElement curSelection = bagHolder.bag().pop();
-        RandomBag.LOGGER.info("Pulled: " + curSelection + " | " + bagHolder.bag().size() + "/" + instance.size()*multiplier + " variants left in this bag.");
+        RandomBag.LOGGER.debug("Pulled: <" + curSelection + "> | " + bagHolder.bag().size() + "/" + instance.size()*multiplier + " variants left in this bag.");
         return curSelection;
     }
 
@@ -102,17 +98,19 @@ public class JigsawPlacementMixin {
     private static void matchIfNotCached(String resourceLoc){
 
         if(!randomBags.containsKey(resourceLoc)){
+            RandomBag.LOGGER.debug("Checking structure pool <" + resourceLoc + "> for random bag");
             @Nonnull Integer matchingPatternIdx = -1;
             matchingPatternIdx = doesResourceMatch(resourceLoc);
 
             // no match, will use normal randomization
             if(matchingPatternIdx == -1) {
-                RandomBag.LOGGER.debug("Bag patterns didnt match " + resourceLoc);
+                RandomBag.LOGGER.debug("Bag patterns didnt match <" + resourceLoc + ">");
                 // RandomBag.matchPatternCache.put(resourceLoc,0);
                 randomBags.put(resourceLoc, null);
             }
             else
             {
+                RandomBag.LOGGER.debug("Structure pool <" + resourceLoc + "> allowed for random bag");
                 randomBags.put(resourceLoc, new NotedBag(matchingPatternIdx, new ObjectArrayList<StructurePoolElement>()));
             }
         }
@@ -127,16 +125,16 @@ public class JigsawPlacementMixin {
     private static @Nonnull Integer doesResourceMatch(String resourceLoc){
         @Nonnull Integer matchingIdx = -1;
         // match current structure location to allowed config
-        RandomBag.LOGGER.debug("First time matching " + resourceLoc);
+        RandomBag.LOGGER.debug("First time matching <" + resourceLoc + ">");
         int i = 0;
         for (Map.Entry<Pattern,Integer> set : RandomBag.matchPatternCycle.entrySet()) {
             // "compstruct:aluminium_boulder etc"
             if(set.getKey().matcher(resourceLoc).find()) {
-                RandomBag.LOGGER.debug("Found match " + set.getKey().toString());
+                RandomBag.LOGGER.debug("Found match <" + set.getKey().toString() + ">");
                 matchingIdx = i;
                 break;
             }
-            RandomBag.LOGGER.debug("Bag pattern " + set.getKey().toString() + " didnt match " + resourceLoc);
+            RandomBag.LOGGER.debug("Bag pattern <" + set.getKey().toString() + "> didnt match <" + resourceLoc + ">");
             i++;
         }
         return matchingIdx;
