@@ -11,6 +11,6 @@ The weight specified in the datapack is still respected, if >1 the variant is ad
 
 ## Config
 
-- ALLOWED_RESOURCE_LOCATIONS: Array of strings of the resource locations of your structures affected by the change. Supports wildcards (*). Examples: `minecraft:trail_ruins*`, `minecraft:village/taiga*`, `compstruct:*_boulder`
+- ALLOWED_STRUCTURE_POOLS: Array of strings of the resource locations of your structures affected by the change. Supports wildcards (*). Examples: `minecraft:trail_ruins*`, `minecraft:village/*/houses`, `mydatapck:*`
 - BAG_SIZE_MULTS: This determines how many "decks" are shuffeled together at once. Default is 1, but can be increased to allow some more variation.
 
