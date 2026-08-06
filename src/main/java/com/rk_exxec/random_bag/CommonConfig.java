@@ -22,4 +22,9 @@ public class CommonConfig {
         BUILDER.pop();
         SPEC = BUILDER.build();
     }
+
+    public static void onLoad()
+	{
+        
+	}
 }
